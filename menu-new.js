@@ -362,7 +362,10 @@ function initMap() {
       window.notificationSystem?.warning('GPS no disponible, usando ubicación por defecto');
     }, 10000);
 
-    navigator.geolocation.getCurrentPosition(
+    // Usar watchPosition en lugar de getCurrentPosition para:
+    // 1. Obtener ubicación en caché rápido (maximumAge)
+    // 2. Mantener la ubicación actualizada
+    const watchId = navigator.geolocation.watchPosition(
       (position) => {
         clearTimeout(timeoutId);
         
@@ -370,6 +373,15 @@ function initMap() {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
+
+        // Si ya tenemos un mapa y marcador, solo actualizamos posición
+        if (window.userMarker) {
+             window.userMarker.setPosition(userLocation);
+             // Solo centrar si es la primera vez o si el usuario no ha movido mucho el mapa?
+             // Por ahora mantenemos comportamiento original: centrar
+             map.setCenter(userLocation);
+             return; 
+        }
 
         // Efecto de zoom suave desde el espacio al ubicarse
         if (map) {
@@ -381,7 +393,7 @@ function initMap() {
             } else {
               clearInterval(zoomAnimation);
               // Actualizar marcador después de terminar el zoom
-              new google.maps.Marker({
+              window.userMarker = new google.maps.Marker({
                 position: userLocation,
                 map: map,
                 title: 'Mi ubicación',
@@ -396,51 +408,62 @@ function initMap() {
         map.setCenter(userLocation);
 
         // Efecto de éxito: agregar clase y remover overlay con zoom
-        mapContainer.parentElement.classList.add('gps-found');
-        
-        // Crear efecto visual de zoom desde el espacio
-        const earthEffectOverlay = document.createElement('div');
-        earthEffectOverlay.style.cssText = `
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: radial-gradient(circle at center, rgba(0, 255, 100, 0.2), transparent 70%);
-          pointer-events: none;
-          animation: earthZoomIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-          z-index: 5;
-        `;
-        mapContainer.parentElement.insertBefore(earthEffectOverlay, mapContainer);
-        
-        // Crear onda expansiva de ripple (solo si es la primera vez)
-        setTimeout(() => {
-          const ripples = mapContainer.parentElement.querySelectorAll('.gps-ripple');
-          if (ripples.length < 3) {
-            const ripple = document.createElement('div');
-            ripple.className = 'gps-ripple';
-            ripple.style.animation = 'rippleExpand 0.8s ease-out forwards';
-            mapContainer.parentElement.appendChild(ripple);
+        // Solo hacerlo si aún existe el overlay
+        if (gpsOverlay && gpsOverlay.parentElement) {
+            mapContainer.parentElement.classList.add('gps-found');
             
-            setTimeout(() => ripple.remove(), 800);
-          }
-        }, 300);
-        
-        // Remover overlay de carga
-        gpsOverlay.style.animation = 'fadeOut 0.6s ease-out forwards';
-        setTimeout(() => {
-          gpsOverlay.remove();
-          earthEffectOverlay.remove();
-        }, 600);
+            // Crear efecto visual de zoom desde el espacio
+            const earthEffectOverlay = document.createElement('div');
+            earthEffectOverlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(0, 255, 100, 0.2), transparent 70%);
+            pointer-events: none;
+            animation: earthZoomIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            z-index: 5;
+            `;
+            mapContainer.parentElement.insertBefore(earthEffectOverlay, mapContainer);
+            
+            // Crear onda expansiva de ripple (solo si es la primera vez)
+            setTimeout(() => {
+            const ripples = mapContainer.parentElement.querySelectorAll('.gps-ripple');
+            if (ripples.length < 3) {
+                const ripple = document.createElement('div');
+                ripple.className = 'gps-ripple';
+                ripple.style.animation = 'rippleExpand 0.8s ease-out forwards';
+                mapContainer.parentElement.appendChild(ripple);
+                
+                setTimeout(() => ripple.remove(), 800);
+            }
+            }, 300);
+            
+            // Remover overlay de carga
+            gpsOverlay.style.animation = 'fadeOut 0.6s ease-out forwards';
+            setTimeout(() => {
+            gpsOverlay.remove();
+            earthEffectOverlay.remove();
+            }, 600);
+        }
       },
       (error) => {
-        clearTimeout(timeoutId);
-        console.warn('Error de geolocalización:', error);
-        gpsOverlay.style.animation = 'fadeOut 0.5s ease-out forwards';
-        setTimeout(() => {
-          gpsOverlay.remove();
-        }, 500);
-        window.notificationSystem?.warning('No se pudo obtener ubicación');
+        // Solo mostrar error si es el primer intento (overlay visible)
+        if (gpsOverlay && gpsOverlay.parentNode) {
+            clearTimeout(timeoutId);
+            console.warn('Error de geolocalización:', error);
+            gpsOverlay.style.animation = 'fadeOut 0.5s ease-out forwards';
+            setTimeout(() => {
+            gpsOverlay.remove();
+            }, 500);
+            window.notificationSystem?.warning('No se pudo obtener ubicación');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 5000 // ✅ CLAVE: Permite usar ubicación en caché para carga instantánea
       }
     );
   } else {
