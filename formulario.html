@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Formulario de Tareas - LiderControl">
+    <meta name="theme-color" content="#00d4ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Formulario | LiderControl</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="neon-styles.css">
+    <link rel="stylesheet" href="formulario.css">
+</head>
+
+<body>
+    <!-- Header con menú hamburguesa -->
+    <header>
+        <div class="header-content">
+            <button id="menu-btn" class="menu-btn" aria-label="Abrir menú">☰</button>
+            <h1>Formulario</h1>
+        </div>
+        <p id="fecha"></p>
+    </header>
+
+    <!-- Menú lateral -->
+    <nav id="side-menu" class="side-menu">
+        <div class="user-details">
+            <p id="user-name"></p>
+            <p id="user-email"></p>
+        </div>
+        <ul>
+            <li><a href="menu.html">Mis Tareas</a></li>
+            <li><a href="#">Tareas Rechazadas</a></li>
+            <li><a href="#">Mapa de Tareas</a></li>
+            <li><a href="#">Historial</a></li>
+            <li><a href="#">Dashboard</a></li>
+        </ul>
+        <hr>
+        <ul>
+            <li><a href="#">Cambiar de Equipo</a></li>
+            <li><a href="#">Ajustes</a></li>
+        </ul>
+        <hr>
+        <button id="logout-btn" class="logout-btn">Cerrar Sesión</button>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main>
+        <button id="emergency-btn" class="emergency-btn" title="Recargar información">⟲ Recargar</button>
+        <h2>Formulario de Tarea</h2>
+        <p>Completa la información del formulario:</p>
+
+        <!-- Contenedor del formulario -->
+        <div class="form-container">
+            <div class="form-section">
+                <h3>Datos del Cliente</h3>
+                <div class="form-group">
+                    <label for="buscarCliente">Cliente</label>
+                    <select id="buscarCliente" class="dropdown" required>
+                        <option value="">Seleccionar Cliente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="buscarUnidad">Unidad</label>
+                    <select id="buscarUnidad" class="dropdown" required disabled>
+                        <option value="">Seleccionar Unidad</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="latitud">Latitud</label>
+                    <input type="text" id="latitud" placeholder="Latitud" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="longitud">Longitud</label>
+                    <input type="text" id="longitud" placeholder="Longitud" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="tipoTarea">Tipo de Tarea</label>
+                    <input type="text" id="tipoTarea" placeholder="Tipo de Tarea" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="ubicaciones-mapa">Ubicación del Cliente</label>
+                    <div class="map-container">
+                        <div id="ubicaciones-mapa" class="map-element"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-buttons">
+            <button id="cancelar" class="btn-secondary">Cancelar</button>
+            <button id="enviar" class="btn-primary">Enviar</button>
+        </div>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
+
+    <!-- Sistemas Globales -->
+    <script src="firebase-config.js"></script>
+    <script src="notification-system.js"></script>
+    <script src="loader-system.js"></script>
+    <script src="helpers.js"></script>
+    <script src="offline-queue.js"></script>
+    <script src="pwa-init.js"></script>
+
+    <!-- Google Maps API -->
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIJVQyZz32eAvWIpmN6tOy_CGbtfSjBJo&loading=async"></script>
+
+    <!-- Script del formulario mejorado -->
+    <script src="formulario-new.js"></script>
+</body>
+
+</html>

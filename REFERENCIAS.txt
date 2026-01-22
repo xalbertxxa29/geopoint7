@@ -1,0 +1,29 @@
+// REFERENCIA RÁPIDA DE FUNCIONES
+
+// Autenticación
+window.logoutUser()              // Cerrar sesión
+window.getCurrentUser()          // Obtener usuario actual
+window.isAuthenticated()         // ¿Está autenticado?
+
+// Helpers
+Helpers.calculateDistance()      // Distancia entre dos puntos
+Helpers.formatDate()             // Formato de fecha
+Helpers.formatTime()             // Formato de hora
+Helpers.getStorage()             // Leer localStorage
+Helpers.setStorage()             // Guardar en localStorage
+Helpers.onConnectionChange()     // Monitorear conexión
+
+// Notificaciones
+window.notificationSystem.success()   // Éxito
+window.notificationSystem.error()     // Error
+window.notificationSystem.warning()   // Advertencia
+window.notificationSystem.confirm()   // Confirmar
+
+// Loading
+window.loadingSystem.show()      // Mostrar carga
+window.loadingSystem.hide()      // Ocultar carga
+
+// Firebase
+window.firebaseAuth              // Firebase Auth
+window.firebaseDB                // Firebase Firestore
+window.firebaseStorage           // Firebase Storage

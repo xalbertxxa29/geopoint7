@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Mis Tareas - LiderControl">
+    <meta name="theme-color" content="#00d4ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Mis Tareas | LiderControl</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="neon-styles.css">
+    <link rel="stylesheet" href="menu-new.css">
+</head>
+
+<body>
+    <!-- Header con menú hamburguesa -->
+    <header>
+        <div class="header-content">
+            <button id="menu-btn" class="menu-btn" aria-label="Abrir menú">☰</button>
+            <h1>Mis Tareas</h1>
+        </div>
+        <p id="fecha"></p>
+    </header>
+
+    <!-- Menú lateral -->
+    <nav id="side-menu" class="side-menu">
+        <div class="user-details">
+            <p id="user-name"></p>
+            <p id="user-email"></p>
+        </div>
+        <ul>
+            <li><a href="menu.html" class="active">Mis Tareas</a></li>
+            <li><a href="#">Tareas Rechazadas</a></li>
+            <li><a href="#">Mapa de Tareas</a></li>
+            <li><a href="#">Historial</a></li>
+            <li><a href="#">Dashboard</a></li>
+        </ul>
+        <hr>
+        <ul>
+            <li><a href="#">Cambiar de Equipo</a></li>
+            <li><a href="#">Ajustes</a></li>
+        </ul>
+        <hr>
+        <button id="logout-btn" class="logout-btn">Cerrar Sesión</button>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="pendientes">Pendientes</button>
+            <button class="tab-btn" data-tab="iniciados">Iniciados</button>
+            <button class="tab-btn" data-tab="completados">Completados</button>
+        </div>
+
+        <div id="pendientes" class="tab-content active">
+            <h2>Tareas Pendientes</h2>
+            <p>A continuación, se muestra tu ubicación actual en el mapa:</p>
+            <div class="map-container">
+                <div id="map" class="map-element"></div>
+            </div>
+        </div>
+
+        <div id="iniciados" class="tab-content">
+            <h2>Tareas Iniciadas</h2>
+            <p>Estas son las tareas que has iniciado:</p>
+            <div id="iniciados-container" class="tareas-container">
+                <!-- Aquí se insertarán las tarjetas dinámicamente -->
+            </div>
+        </div>
+
+        <div id="completados" class="tab-content">
+            <h2>Tareas Completadas</h2>
+            <div id="completados-container" class="tareas-container">
+                <!-- Aquí se insertarán las tarjetas dinámicamente -->
+            </div>
+        </div>
+
+        <!-- FAB (Floating Action Button) -->
+        <div class="fab-container">
+            <button class="fab main-fab" id="main-fab" title="Agregar tarea">⊕</button>
+            <div class="fab-options" id="fab-options">
+                <button class="fab option-fab" id="add-fab" title="Nueva tarea">+</button>
+            </div>
+        </div>
+
+        <!-- Modal para las opciones -->
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" id="close-modal">&times;</span>
+                <h2>Selecciona un Formulario</h2>
+                <p>Elige el tipo de tarea a realizar:</p>
+                <div class="modal-options">
+                    <button class="modal-option" data-tipo="Unidades Armadas">
+                        <span class="option-icon">🚁</span>
+                        <span>UNIDADES ARMADAS</span>
+                    </button>
+                    <button class="modal-option" data-tipo="Encuesta de Satisfacción">
+                        <span class="option-icon">📊</span>
+                        <span>ENCUESTA</span>
+                    </button>
+                    <button class="modal-option" data-tipo="Ronda de la Unidad">
+                        <span class="option-icon">🔍</span>
+                        <span>RONDA</span>
+                    </button>
+                    <button class="modal-option" data-tipo="Formulario Dinámico">
+                        <span class="option-icon">📝</span>
+                        <span>DINÁMICO</span>
+                    </button>
+                    <button class="modal-option" data-tipo="Resguardos">
+                        <span class="option-icon">📦</span>
+                        <span>RESGUARDOS</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
+
+    <!-- Google Maps API -->
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIJVQyZz32eAvWIpmN6tOy_CGbtfSjBJo&loading=async"></script>
+
+    <!-- Sistemas Globales -->
+    <script src="firebase-config.js"></script>
+    <script src="notification-system.js"></script>
+    <script src="loader-system.js"></script>
+    <script src="helpers.js"></script>
+    <script src="offline-queue.js"></script>
+    <script src="pwa-init.js"></script>
+
+    <!-- Script Principal del Menú -->
+    <script src="menu-new.js"></script>
+</body>
+
+</html>
