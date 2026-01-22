@@ -3,7 +3,7 @@
  * Separación de caché local y externa para garantizar instalación
  */
 
-const CACHE_NAME = 'geopoint-v5';
+const CACHE_NAME = 'geopoint-v6';
 
 // 1. Archivos LOCALES (Críticos) - Deben existir sí o sí para instalarse
 const LOCAL_ASSETS = [
@@ -26,7 +26,8 @@ const LOCAL_ASSETS = [
   './styles.css',
   './menu-new.css',
   './formulario.css',
-  './manifest.json'
+  './manifest.json',
+  './pwa-init.js'
 ];
 
 // 2. Archivos EXTERNOS (Opcionales en instalación) - Se cachean al usarse
