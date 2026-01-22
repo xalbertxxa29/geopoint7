@@ -20,6 +20,7 @@ const LOCAL_ASSETS = [
   './offline-queue.js',
   './menu-new.js',
   './formulario-new.js',
+  './offline-storage.js',
   './map-manager.js',
   './neon-styles.css',
   './styles.css',

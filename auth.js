@@ -57,14 +57,28 @@
         // Intentar login
         const result = await auth.signInWithEmailAndPassword(email, password);
         console.log('[auth] ✅ Login exitoso:', result.user.email);
-        
+
+        // 💾 Guardar datos para acceso offline inmediato
+        if (window.offlineStorage) {
+          try {
+            await window.offlineStorage.setUserData({
+              uid: result.user.uid,
+              email: result.user.email,
+              displayName: result.user.displayName || result.user.email.split('@')[0]
+            });
+            console.log('[auth] 💾 Sesión guardada offline');
+          } catch (storageErr) {
+            console.warn('[auth] advertencia al guardar offline:', storageErr);
+          }
+        }
+
         // Esperar a que Firebase guarde la sesión
         setTimeout(() => {
           window.location.href = 'menu.html';
         }, 1000);
       } catch (error) {
         console.error('[auth] ❌ Error de login:', error.message);
-        
+
         let mensaje = 'Error en el login';
         if (error.code === 'auth/user-not-found') {
           mensaje = 'El usuario no existe';
@@ -75,7 +89,7 @@
         } else if (error.code === 'auth/too-many-requests') {
           mensaje = 'Demasiados intentos. Intenta más tarde';
         }
-        
+
         alert(mensaje);
         loginBtn.disabled = false;
         loginBtn.textContent = 'Iniciar Sesión';
@@ -84,9 +98,15 @@
   }
 
   // Salir (logout)
-  window.logoutUser = async function() {
+  window.logoutUser = async function () {
     try {
       await auth.signOut();
+
+      // 🧹 Limpiar también datos offline
+      if (window.offlineStorage) {
+        await window.offlineStorage.clearAll();
+      }
+
       console.log('[auth] ✅ Logout exitoso');
       window.location.href = 'index.html';
     } catch (error) {

@@ -5,26 +5,67 @@
 
 // ========== PROTECCIÓN DE PÁGINA CON SESIÓN PERSISTENTE ==========
 
-window.firebaseAuth.onAuthStateChanged((user) => {
+// ========== PROTECCIÓN DE PÁGINA CON SESIÓN PERSISTENTE ==========
+
+// Esperar a que Firebase y OfflineStorage estén listos
+const checkSession = async (user) => {
   if (user) {
-    console.log('✅ Usuario autenticado:', user.email);
-    initializePage();
-  } else {
-    console.log('❌ Sin sesión activa. Redirigiendo al login...');
-    window.location.href = 'index.html';
+    console.log('✅ Usuario autenticado online:', user.email);
+
+    // Guardar sesión para el futuro offline
+    if (window.offlineStorage) {
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || user.email.split('@')[0]
+      };
+      window.offlineStorage.setUserData(userData);
+    }
+
+    initializePage(user);
+    return;
   }
-});
+
+  // Si no hay usuario online, verificar almacenamiento offline
+  console.log('⚠️ Sin conexión a Firebase. Verificando sesión offline...');
+
+  if (window.offlineStorage) {
+    const offlineUser = await window.offlineStorage.getUserData();
+    if (offlineUser) {
+      console.log('✅ Sesión recuperada del almacenamiento offline:', offlineUser.email);
+      window.notificationSystem?.warning('Modo Offline: Usando sesión guardada');
+
+      // Simular objeto user de Firebase para la inicialización
+      const mockUser = {
+        uid: offlineUser.uid,
+        email: offlineUser.email,
+        displayName: offlineUser.displayName
+      };
+
+      initializePage(mockUser);
+      return;
+    }
+  }
+
+  // Si falla todo, redirigir
+  console.log('❌ Sin sesión activa ni offline. Redirigiendo al login...');
+  window.location.href = 'index.html';
+};
+
+// Escuchar cambios de auth
+window.firebaseAuth.onAuthStateChanged(checkSession);
 
 // ========== INICIALIZACIÓN DE PÁGINA ==========
 
-function initializePage() {
-  // Obtener usuario actual
-  const user = window.firebaseAuth.currentUser;
+// ========== INICIALIZACIÓN DE PÁGINA ==========
+
+function initializePage(user) {
+  // Obtener usuario actual (pasado por parámetro desde checkSession)
   const userData = user ? {
     uid: user.uid,
     email: user.email,
     displayName: user.displayName || 'Usuario'
-  } : window.SessionManager.getUserData();
+  } : null;
 
   if (!userData) {
     window.location.href = 'index.html';
@@ -41,10 +82,10 @@ function initializePage() {
   initTabs();
   initLogout();
   initFab();
-  
+
   // Cargar tareas
   cargarTareas(userData.email);
-  
+
   // Monitorear conexión
   monitorearConexion();
 }
@@ -86,11 +127,11 @@ function initTabs() {
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const tabName = btn.getAttribute('data-tab');
-      
+
       // Remover clase activa de todos
       tabBtns.forEach(b => b.classList.remove('active'));
       tabContents.forEach(content => content.classList.remove('active'));
-      
+
       // Agregar clase activa al seleccionado
       btn.classList.add('active');
       document.getElementById(tabName)?.classList.add('active');
@@ -102,7 +143,7 @@ function initTabs() {
 
 function initLogout() {
   const logoutBtn = document.getElementById('logout-btn');
-  
+
   if (!logoutBtn) return;
 
   logoutBtn.addEventListener('click', () => {
@@ -111,20 +152,20 @@ function initLogout() {
       async () => {
         try {
           window.loadingSystem?.show('Cerrando sesión...');
-          
+
           // Cerrar sesión Firebase
           try {
             await window.firebaseAuth.signOut();
           } catch (error) {
             console.warn('Firebase logout:', error);
           }
-          
+
           // Limpiar sesión local
           window.SessionManager?.clearSession();
-          
+
           window.loadingSystem?.hide();
           window.notificationSystem?.success('Sesión cerrada');
-          
+
           setTimeout(() => {
             window.location.href = 'index.html';
           }, 500);
@@ -152,7 +193,7 @@ function initFab() {
 
   // ✅ Asegurar z-index alto (más que Google Maps)
   mainFab.style.zIndex = '9999';
-  
+
   // ✅ Abrir modal al hacer click en FAB
   mainFab.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -190,7 +231,7 @@ function initFab() {
 async function cargarTareas(userEmail) {
   try {
     const user = window.firebaseAuth.currentUser;
-    
+
     if (user) {
       // Online: cargar desde Firebase
       await cargarTareasFirebase(user.uid);
@@ -298,7 +339,7 @@ function createOverlay() {
 
 function initMap() {
   const mapContainer = document.getElementById('map');
-  
+
   if (!mapContainer) {
     console.warn('Contenedor del mapa no encontrado');
     return;
@@ -315,7 +356,7 @@ function initMap() {
   `;
   mapContainer.parentElement.style.position = 'relative';
   mapContainer.parentElement.insertBefore(gpsOverlay, mapContainer);
-  
+
   // Aplicar efecto de zoom desde el espacio al contenedor del mapa
   mapContainer.style.animation = 'spaceZoomEffect 3s ease-out forwards';
 
@@ -368,7 +409,7 @@ function initMap() {
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         clearTimeout(timeoutId);
-        
+
         const userLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
@@ -376,11 +417,11 @@ function initMap() {
 
         // Si ya tenemos un mapa y marcador, solo actualizamos posición
         if (window.userMarker) {
-             window.userMarker.setPosition(userLocation);
-             // Solo centrar si es la primera vez o si el usuario no ha movido mucho el mapa?
-             // Por ahora mantenemos comportamiento original: centrar
-             map.setCenter(userLocation);
-             return; 
+          window.userMarker.setPosition(userLocation);
+          // Solo centrar si es la primera vez o si el usuario no ha movido mucho el mapa?
+          // Por ahora mantenemos comportamiento original: centrar
+          map.setCenter(userLocation);
+          return;
         }
 
         // Efecto de zoom suave desde el espacio al ubicarse
@@ -403,18 +444,18 @@ function initMap() {
             }
           }, 100); // 100ms entre cada zoom, total ~1.2 segundos
         }
-        
+
         // Centrar en ubicación real
         map.setCenter(userLocation);
 
         // Efecto de éxito: agregar clase y remover overlay con zoom
         // Solo hacerlo si aún existe el overlay
         if (gpsOverlay && gpsOverlay.parentElement) {
-            mapContainer.parentElement.classList.add('gps-found');
-            
-            // Crear efecto visual de zoom desde el espacio
-            const earthEffectOverlay = document.createElement('div');
-            earthEffectOverlay.style.cssText = `
+          mapContainer.parentElement.classList.add('gps-found');
+
+          // Crear efecto visual de zoom desde el espacio
+          const earthEffectOverlay = document.createElement('div');
+          earthEffectOverlay.style.cssText = `
             position: absolute;
             top: 0;
             left: 0;
@@ -425,39 +466,39 @@ function initMap() {
             animation: earthZoomIn 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             z-index: 5;
             `;
-            mapContainer.parentElement.insertBefore(earthEffectOverlay, mapContainer);
-            
-            // Crear onda expansiva de ripple (solo si es la primera vez)
-            setTimeout(() => {
+          mapContainer.parentElement.insertBefore(earthEffectOverlay, mapContainer);
+
+          // Crear onda expansiva de ripple (solo si es la primera vez)
+          setTimeout(() => {
             const ripples = mapContainer.parentElement.querySelectorAll('.gps-ripple');
             if (ripples.length < 3) {
-                const ripple = document.createElement('div');
-                ripple.className = 'gps-ripple';
-                ripple.style.animation = 'rippleExpand 0.8s ease-out forwards';
-                mapContainer.parentElement.appendChild(ripple);
-                
-                setTimeout(() => ripple.remove(), 800);
+              const ripple = document.createElement('div');
+              ripple.className = 'gps-ripple';
+              ripple.style.animation = 'rippleExpand 0.8s ease-out forwards';
+              mapContainer.parentElement.appendChild(ripple);
+
+              setTimeout(() => ripple.remove(), 800);
             }
-            }, 300);
-            
-            // Remover overlay de carga
-            gpsOverlay.style.animation = 'fadeOut 0.6s ease-out forwards';
-            setTimeout(() => {
+          }, 300);
+
+          // Remover overlay de carga
+          gpsOverlay.style.animation = 'fadeOut 0.6s ease-out forwards';
+          setTimeout(() => {
             gpsOverlay.remove();
             earthEffectOverlay.remove();
-            }, 600);
+          }, 600);
         }
       },
       (error) => {
         // Solo mostrar error si es el primer intento (overlay visible)
         if (gpsOverlay && gpsOverlay.parentNode) {
-            clearTimeout(timeoutId);
-            console.warn('Error de geolocalización:', error);
-            gpsOverlay.style.animation = 'fadeOut 0.5s ease-out forwards';
-            setTimeout(() => {
+          clearTimeout(timeoutId);
+          console.warn('Error de geolocalización:', error);
+          gpsOverlay.style.animation = 'fadeOut 0.5s ease-out forwards';
+          setTimeout(() => {
             gpsOverlay.remove();
-            }, 500);
-            window.notificationSystem?.warning('No se pudo obtener ubicación');
+          }, 500);
+          window.notificationSystem?.warning('No se pudo obtener ubicación');
         }
       },
       {
