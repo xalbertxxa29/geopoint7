@@ -262,9 +262,10 @@ async function saveDynamicAction() {
             tipo: ACTIVITY_TYPES[currentFormType].title,
             tipoCode: currentFormType,
             icono: ACTIVITY_TYPES[currentFormType].icon,
-            timestamp: new Date().toISOString(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(), // Formato Timestamp nativo
             fecha: new Date().toLocaleDateString('es-ES'),
-            hora: new Date().toLocaleTimeString('es-ES')
+            hora: new Date().toLocaleTimeString('es-ES'),
+            estado: 'ACTIVO' // Campo solicitado
         };
 
         let specificData = {};
@@ -372,24 +373,115 @@ function loadActivities() {
 
 // ========== FINALIZAR VISITA ==========
 
+function closeWarningModal() {
+    document.getElementById('warning-modal').classList.remove('active');
+}
+
 async function finalizarVisita() {
-    if (!confirm('¿Estás seguro de finalizar esta visita?')) return;
-
-    if (window.loadingSystem) window.loadingSystem.show('Finalizando visita...');
-
-    try {
-        await window.firebaseDB.collection('tareas').doc(currentTaskId).update({
-            estado: 'COMPLETADA',
-            horaFin: new Date().toISOString()
-        });
-
-        if (window.loadingSystem) window.loadingSystem.hide();
-        alert('Visita finalizada exitosamente.');
-        window.location.href = 'menu.html';
-
-    } catch (error) {
-        console.error("Error finalizando:", error);
-        if (window.loadingSystem) window.loadingSystem.hide();
-        alert("Error al finalizar: " + error.message);
+    if (!currentTaskData || !currentTaskData.ubicacion) {
+        alert("Error: No hay datos de ubicación de la visita.");
+        return;
     }
+
+    if (window.loadingSystem) window.loadingSystem.show('Verificando ubicación...');
+
+    // 1. Obtener ubicación actual
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        const userLat = position.coords.latitude;
+        const userLon = position.coords.longitude;
+
+        const siteLat = currentTaskData.ubicacion.latitude;
+        const siteLon = currentTaskData.ubicacion.longitude;
+
+        // 2. Calcular distancia
+        const distance = getDistanceFromLatLonInMeters(userLat, userLon, siteLat, siteLon);
+        console.log(`📏 Distancia al objetivo: ${distance.toFixed(2)} metros`);
+
+        if (distance > 50) {
+            // Fuera de rango
+            if (window.loadingSystem) window.loadingSystem.hide();
+            document.getElementById('distance-display').textContent = `Distancia actual: ${distance.toFixed(0)} metros`;
+            document.getElementById('warning-modal').classList.add('active');
+            return;
+        }
+
+        // 3. Procesar Finalización (Dentro de rango)
+        if (!confirm('📍 Estás dentro del rango. ¿Confirmar finalización?')) {
+            if (window.loadingSystem) window.loadingSystem.hide();
+            return;
+        }
+
+        if (window.loadingSystem) window.loadingSystem.show('Finalizando visita...');
+
+        try {
+            // Calcular Tiempo de Estadía
+            const now = new Date();
+            let tiempoEstadia = "Desconocido";
+
+            if (currentTaskData.timestamp) {
+                // Soportar tanto Timestamp de Firestore como Date strings
+                let fechaInicio;
+                if (currentTaskData.timestamp.toDate) {
+                    fechaInicio = currentTaskData.timestamp.toDate();
+                } else {
+                    fechaInicio = new Date(currentTaskData.timestamp);
+                }
+
+                const diffMs = now - fechaInicio;
+                const diffMins = Math.floor(diffMs / 60000);
+                const hrs = Math.floor(diffMins / 60);
+                const mins = diffMins % 60;
+                tiempoEstadia = `${hrs}h ${mins}m`;
+            }
+
+            // Actualizar Firestore
+            await window.firebaseDB.collection('tareas').doc(currentTaskId).update({
+                estado: 'COMPLETADA',
+                finalizacion: firebase.firestore.FieldValue.serverTimestamp(),
+                finalizacionFecha: now.toLocaleDateString('es-ES'),
+                finalizacionHora: now.toLocaleTimeString('es-ES'),
+                tiempoEstadia: tiempoEstadia,
+                finalizacionUbicacion: {
+                    latitude: userLat,
+                    longitude: userLon
+                }
+            });
+
+            if (window.loadingSystem) window.loadingSystem.hide();
+            alert(`✅ Visita Finalizada.\nTiempo de estadía: ${tiempoEstadia}`);
+            window.location.href = 'menu.html';
+
+        } catch (error) {
+            console.error("Error finalizando:", error);
+            if (window.loadingSystem) window.loadingSystem.hide();
+            alert("Error al finalizar: " + error.message);
+        }
+
+    }, (error) => {
+        if (window.loadingSystem) window.loadingSystem.hide();
+        console.error("Error GPS:", error);
+        alert("No se pudo obtener tu ubicación. Asegúrate de tener el GPS activado.");
+    }, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+    });
+}
+
+// Haversine formula para metros
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Radio de la tierra en metros
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distancia en metros
+    return d;
+}
+
+function deg2rad(deg) {
+    return deg * (Math.PI / 180);
 }

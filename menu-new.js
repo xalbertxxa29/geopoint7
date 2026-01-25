@@ -111,10 +111,77 @@ function initTabs() {
       // Si es dashboard, cargar datos
       if (tabName === 'dashboard') {
         loadDashboardData();
+      } else if (tabName === 'iniciados') {
+        loadIniciados();
       }
     });
   });
 }
+
+// ========== CARGAR TAREAS INICIADAS ==========
+
+function loadIniciados() {
+  const container = document.getElementById('tareas-iniciadas');
+  if (!container) return;
+
+  // Limpiar mensaje anterior
+  // container.innerHTML = '<p style="text-align:center; color:#888;">Cargando...</p>';
+
+  const user = window.firebaseAuth.currentUser;
+  if (!user) return;
+
+  // Escuchar cambios en tiempo real
+  window.firebaseDB.collection('tareas')
+    .where('userId', '==', user.uid)
+    .where('estado', '==', 'INICIADO')
+    .orderBy('timestamp', 'desc')
+    .onSnapshot((snapshot) => {
+      if (snapshot.empty) {
+        container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No tienes visitas iniciadas.</p>';
+        return;
+      }
+
+      let html = '';
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+
+        // Formatear fecha/hora
+        let fechaHora = 'Sin fecha';
+        if (data.fecha) fechaHora = data.fecha;
+
+        // Intentar obtener hora del timestamp si existe
+        if (data.timestamp && data.timestamp.toDate) {
+          const dateObj = data.timestamp.toDate();
+          const hora = dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+          fechaHora = `${data.fecha || ''} ${hora}`;
+        }
+
+        html += `
+                    <div class="task-card" onclick="resumeTask('${doc.id}')" style="cursor:pointer; border-left: 4px solid #00d4ff; background: white; margin-bottom: 15px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <h3 style="margin:0; color:#333; font-size:1.1rem; font-weight:bold;">${data.cliente || 'Cliente'}</h3>
+                            <span style="background:#e0f7fa; color:#006064; padding:4px 10px; border-radius:15px; font-size:0.7rem; font-weight:bold;">INICIADO</span>
+                        </div>
+                        
+                        <div style="color:#666; font-size:0.9rem; margin-bottom:8px;">
+                            <span style="margin-right:5px;">📍</span> ${data.unidad || 'Unidad'}
+                        </div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; padding-top:8px; margin-top:5px;">
+                            <span style="color:#888; font-size:0.8rem;">📅 ${fechaHora}</span>
+                            <span style="color:#00d4ff; font-weight:bold; font-size:0.9rem;">CONTINUAR ➜</span>
+                        </div>
+                    </div>
+                `;
+      });
+      container.innerHTML = html;
+    });
+}
+
+// Función global redicrección
+window.resumeTask = function (taskId) {
+  window.location.href = `tareas.html?taskId=${taskId}`;
+};
 
 // ========== LOGOUT ==========
 
@@ -190,8 +257,8 @@ async function cargarTareas(userEmail) {
 }
 
 async function cargarTareasFirebase(userId) {
-  const iniciasContainer = document.getElementById('iniciados-container');
-  const completasContainer = document.getElementById('completados-container');
+  const iniciasContainer = document.getElementById('tareas-iniciadas');
+  const completasContainer = document.getElementById('tareas-completadas');
 
   try {
     window.loadingSystem?.show('Cargando tareas...');
@@ -200,14 +267,14 @@ async function cargarTareasFirebase(userId) {
     const iniciadas = await window.firebaseDB
       .collection('tareas')
       .where('userId', '==', userId)
-      .where('estado', '==', 'iniciada')
+      .where('estado', '==', 'INICIADO')
       .get();
 
     // Tareas completadas
     const completadas = await window.firebaseDB
       .collection('tareas')
       .where('userId', '==', userId)
-      .where('estado', '==', 'completada')
+      .where('estado', '==', 'COMPLETADA')
       .get();
 
     // Mostrar tareas iniciadas
