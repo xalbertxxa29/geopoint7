@@ -12,9 +12,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     currentTaskId = urlParams.get('taskId');
 
-    if (!currentTaskId) {
+    console.log("📌 ID de Visita recibido:", currentTaskId); // Debug Log
+
+    if (!currentTaskId || currentTaskId === 'undefined' || currentTaskId === 'null') {
         alert('Error: No se ha especificado una visita válida.');
-        window.location.href = 'menu.html';
+        // window.location.href = 'menu.html'; // Comentado temporalmente para permitir debug
         return;
     }
 

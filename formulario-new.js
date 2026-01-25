@@ -492,10 +492,15 @@ async function handleSubmit() {
     if (window.loadingSystem) window.loadingSystem.show('Guardando tarea...');
 
     const user = window.firebaseAuth.currentUser;
+    if (!user) {
+      throw new Error("Usuario no autenticado");
+    }
+
     const tarea = {
       cliente: clienteId,
       unidad: unidadId,
       userId: user.uid,
+      userName: user.displayName || user.email, // Agregado por si las reglas lo requieren
       userEmail: user.email,
       ubicacion: {
         latitude: parseFloat(latitudCliente),
@@ -505,22 +510,31 @@ async function handleSubmit() {
         latitude: currentPosition.lat,
         longitude: currentPosition.lng
       },
-      estado: 'pendiente',
+      estado: 'INICIADO', // Corregido según requerimiento (antes 'pendiente')
       fecha: new Date().toISOString(),
-      createdAt: new Date()
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    await window.firebaseDB.collection('tareas').add(tarea);
+    console.log("📝 Intentando crear tarea:", tarea);
+
+    const docRef = await window.firebaseDB.collection('tareas').add(tarea);
+    console.log("✅ Tarea creada con ID:", docRef.id);
 
     if (window.loadingSystem) window.loadingSystem.hide();
-    if (window.notificationSystem) window.notificationSystem.success('Tarea guardada exitosamente');
+    if (window.notificationSystem) window.notificationSystem.success('Visita iniciada exitosamente');
 
-    setTimeout(() => {
-      window.location.href = 'tareas.html';
-    }, 1500);
+    // Redirigir inmediatamente con el ID
+    window.location.href = `tareas.html?taskId=${docRef.id}`;
+
   } catch (error) {
     if (window.loadingSystem) window.loadingSystem.hide();
-    console.error('❌ Error al guardar tarea:', error);
-    if (window.notificationSystem) window.notificationSystem.error('Error al guardar: ' + error.message);
+    console.error('❌ Error al guardar tarea (Firebase):', error);
+
+    let msg = 'Error al guardar: ' + error.message;
+    if (error.code === 'permission-denied') {
+      msg = '⛔ Error de Permisos: No tienes autorización para crear tareas. Verifica las Reglas de Firestore.';
+    }
+
+    if (window.notificationSystem) window.notificationSystem.error(msg);
   }
 }
