@@ -167,6 +167,13 @@
             width: 90%;
             max-width: 400px;
             color: white;
+
+            /* Fix para scroll */
+            max-height: 85vh;
+            /* Altura máxima del 85% de la pantalla */
+            overflow-y: auto;
+            /* Habilitar scroll vertical */
+            position: relative;
         }
 
         .simple-modal input,
@@ -204,6 +211,87 @@
             background: #00ff64;
             color: #004400;
         }
+
+        /* Estilos de formulario interno */
+        .form-section-title {
+            color: #00d4ff;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.3);
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #a0a0cc;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #00d4ff;
+            color: white;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+        }
+
+        /* Estilos específicos para preguntas de supervisión */
+        .question-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #0044cc;
+        }
+
+        .question-text {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        /* Botones de Foto */
+        .photo-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-photo {
+            flex: 1;
+            padding: 10px;
+            border: 1px dashed #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-photo:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 2px solid #00d4ff;
+            display: none;
+        }
     </style>
 </head>
 
@@ -226,20 +314,21 @@
     </div>
 
     <!-- Grid de Botones -->
+    <!-- Grid de Botones -->
     <div class="buttons-grid">
-        <div class="action-btn" onclick="openActionModal('Capacitación y Charla', '📋')">
+        <div class="action-btn" onclick="openDynamicModal('capacitacion')">
             <span style="font-size: 2rem;">📋</span>
             <span>Capacitación y charla</span>
         </div>
-        <div class="action-btn" onclick="openActionModal('Visita de Supervisión', '🛡️')">
+        <div class="action-btn" onclick="openDynamicModal('supervision')">
             <span style="font-size: 2rem;">🛡️</span>
             <span>Visita de Supervisión</span>
         </div>
-        <div class="action-btn" onclick="openActionModal('Entrega de Items', '📦')">
+        <div class="action-btn" onclick="openDynamicModal('entrega')">
             <span style="font-size: 2rem;">📦</span>
             <span>Entrega de Items</span>
         </div>
-        <div class="action-btn" onclick="openActionModal('Reunión de Coordinación', '🤝')">
+        <div class="action-btn" onclick="openDynamicModal('reunion')">
             <span style="font-size: 2rem;">🤝</span>
             <span>Reunión de coordinación</span>
         </div>
@@ -260,25 +349,31 @@
         <button class="finalize-btn" onclick="finalizarVisita()">FINALIZAR VISITA</button>
     </div>
 
-    <!-- Modal para acciones -->
-    <div id="action-modal" class="simple-modal">
+    <!-- Modal Dinámico Único -->
+    <div id="dynamic-modal" class="simple-modal">
         <div class="simple-modal-content">
-            <h3 id="modal-title" style="margin-top:0; color:#00d4ff;">Actividad</h3>
-            <p>Registrar detalles de esta actividad:</p>
+            <h3 id="dynamic-modal-title" style="margin-top:0; color:#00d4ff;">Actividad</h3>
 
-            <textarea id="modal-notes" rows="4" placeholder="Observaciones o notas..."></textarea>
+            <!-- Contenedor donde se inyectará el formulario específico -->
+            <div id="dynamic-form-container"></div>
 
             <div class="modal-buttons">
-                <button class="btn-cancel" onclick="closeActionModal()">Cancelar</button>
-                <button class="btn-save" onclick="saveAction()">Guardar</button>
+                <button class="btn-cancel" onclick="closeDynamicModal()">Cancelar</button>
+                <button class="btn-save" onclick="saveDynamicAction()">Guardar</button>
             </div>
         </div>
     </div>
+
+    <!-- Inputs de archivo ocultos (reutilizables) -->
+    <input type="file" id="camera-input" accept="image/*" capture="environment" style="display: none;"
+        onchange="handlePhotoSelect(this)">
+    <input type="file" id="gallery-input" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this)">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
 
     <!-- Scripts del sistema -->
     <script src="firebase-config.js"></script>

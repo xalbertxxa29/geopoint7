@@ -9,28 +9,65 @@ let currentActionIcon = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Obtener ID de tarea de la URL
+    console.log("📌 URL Search:", window.location.search);
     const urlParams = new URLSearchParams(window.location.search);
     currentTaskId = urlParams.get('taskId');
 
-    console.log("📌 ID de Visita recibido:", currentTaskId); // Debug Log
+    console.log("📌 ID de Visita capturado:", currentTaskId);
 
     if (!currentTaskId || currentTaskId === 'undefined' || currentTaskId === 'null') {
+        console.error("❌ ID inválido detected");
         alert('Error: No se ha especificado una visita válida.');
-        // window.location.href = 'menu.html'; // Comentado temporalmente para permitir debug
+        window.location.href = 'menu.html';
         return;
     }
 
-    // Autenticación
-    window.firebaseAuth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            window.location.href = 'index.html';
-        } else {
-            document.getElementById('user-display').textContent = user.displayName || user.email;
-            await loadTaskData();
-            loadActivities();
-        }
-    });
+    // Esperar a que Firebase Auth esté listo
+    try {
+        await waitForAuth();
+
+        // Autenticación lista
+        window.firebaseAuth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                console.warn("⚠️ Usuario no autenticado, redirigiendo...");
+                window.location.href = 'index.html';
+            } else {
+                console.log("👤 Usuario autenticado:", user.email);
+                document.getElementById('user-display').textContent = user.displayName || user.email;
+                await loadTaskData();
+                loadActivities();
+            }
+        });
+    } catch (error) {
+        console.error("❌ Error esperando autenticación:", error);
+        alert("Error de sistema: No se pudo inicializar la autenticación.");
+    }
 });
+
+/**
+ * Espera a que window.firebaseAuth esté definido
+ */
+function waitForAuth(timeout = 10000) {
+    return new Promise((resolve, reject) => {
+        if (window.firebaseAuth) {
+            resolve();
+            return;
+        }
+
+        console.log("⏳ Esperando a Firebase Auth...");
+        const startTime = Date.now();
+        const interval = setInterval(() => {
+            if (window.firebaseAuth) {
+                clearInterval(interval);
+                console.log("✅ Firebase Auth detectado");
+                resolve();
+            } else if (Date.now() - startTime > timeout) {
+                clearInterval(interval);
+                reject(new Error("Timeout esperando a Firebase Auth"));
+            }
+        }, 100);
+    });
+}
 
 async function loadTaskData() {
     try {
@@ -50,49 +87,254 @@ async function loadTaskData() {
 
 // ========== MODAL DE ACCIONES ==========
 
-function openActionModal(title, icon) {
-    currentActionType = title;
-    currentActionIcon = icon;
-    document.getElementById('modal-title').textContent = title;
-    document.getElementById('modal-notes').value = '';
-    document.getElementById('action-modal').classList.add('active');
+// ========== MODAL DINÁMICO Y FORMULARIOS ==========
+
+// Configuración de los tipos de actividad
+const ACTIVITY_TYPES = {
+    'supervision': { title: 'Visita de Supervisión', icon: '🛡️' },
+    'entrega': { title: 'Entrega de Items', icon: '📦' },
+    'capacitacion': { title: 'Capacitación y Charla', icon: '📋' },
+    'reunion': { title: 'Reunión de Coordinación', icon: '🤝' }
+};
+
+let currentFormType = '';
+let currentPhotoBlob = null; // Para guardar la foto temporalmente
+
+// Preguntas para Supervisión
+const SUPERVISION_QUESTIONS = [
+    "El personal tiene en buen estado su Uniforme y EPP",
+    "El personal cuenta con su CARNET SUCAMENT VIGENTE",
+    "El personal cuenta con su LICENCIA DE ARMAS VIGENTE",
+    "El personal cuenta con FOTOCHECK DIGITAL",
+    "La Garita se mantiene ordenada y limpia",
+    "Los equipos se encuentran en buen estado (RADIO/GARRET/LINTERNA)",
+    "Se llenan correctamente los cuadernos de ocurrencia y asistencia",
+    "La unidad cuenta con el folder Liderman Actualizado"
+];
+
+function openDynamicModal(type) {
+    currentFormType = type;
+    currentPhotoBlob = null;
+    const config = ACTIVITY_TYPES[type];
+
+    document.getElementById('dynamic-modal-title').textContent = `${config.icon} ${config.title}`;
+    const container = document.getElementById('dynamic-form-container');
+    container.innerHTML = ''; // Limpiar anterior
+
+    // Generar HTML según el tipo
+    let html = '';
+
+    if (type === 'supervision') {
+        html += `<div class="form-section-title">Checklist de Supervisión</div>`;
+        SUPERVISION_QUESTIONS.forEach((q, index) => {
+            html += `
+                <div class="question-card">
+                    <div class="question-text">${index + 1}. ${q}</div>
+                    <select id="sup-q-${index}" class="form-control" style="padding:5px; font-size:0.9rem;">
+                        <option value="Cumple" selected>✅ Cumple</option>
+                        <option value="No Cumple">❌ No Cumple</option>
+                        <option value="No Aplica">➖ No Aplica</option>
+                    </select>
+                </div>
+            `;
+        });
+
+    } else if (type === 'entrega') {
+        html += `
+            <div class="form-group">
+                <label>Comentario de Entrega</label>
+                <textarea id="entrega-comentario" class="form-control" rows="4" placeholder="¿Qué items se entregaron?"></textarea>
+            </div>
+            ${renderPhotoSection()}
+        `;
+
+    } else if (type === 'capacitacion') {
+        html += `
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="cap-tipo" class="form-control">
+                    <option value="CAPACITACION">Capacitación</option>
+                    <option value="CHARLA">Charla</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tema / Nombre</label>
+                <input type="text" id="cap-tema" class="form-control" placeholder="Ej: Uso de Extintores">
+            </div>
+            <div class="form-group">
+                <label>Cantidad de Participantes</label>
+                <select id="cap-cantidad" class="form-control">
+                    ${generateNumberOptions(1, 100)}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Comentarios Adicionales</label>
+                <textarea id="cap-comentarios" class="form-control" rows="3"></textarea>
+            </div>
+            ${renderPhotoSection()}
+        `;
+
+    } else if (type === 'reunion') {
+        html += `
+            <div class="form-group">
+                <label>Acuerdos de la Reunión</label>
+                <textarea id="reunion-acuerdos" class="form-control" rows="5" placeholder="Detalle los puntos tratados..."></textarea>
+            </div>
+            ${renderPhotoSection()}
+        `;
+    }
+
+    container.innerHTML = html;
+    document.getElementById('dynamic-modal').classList.add('active');
 }
 
-function closeActionModal() {
-    document.getElementById('action-modal').classList.remove('active');
+function closeDynamicModal() {
+    document.getElementById('dynamic-modal').classList.remove('active');
+    currentPhotoBlob = null;
 }
 
-async function saveAction() {
-    const notas = document.getElementById('modal-notes').value;
+// Helpers de Renderizado
+function renderPhotoSection() {
+    return `
+        <div class="form-group">
+            <label>Evidencia Fotográfica (Opcional)</label>
+            <div class="photo-buttons">
+                <div class="btn-photo" onclick="triggerCamera()">
+                    📷 Tomar Foto
+                </div>
+                <div class="btn-photo" onclick="triggerGallery()">
+                    📁 Subir Archivo
+                </div>
+            </div>
+            <img id="photo-preview-element" class="photo-preview">
+        </div>
+    `;
+}
 
-    if (window.loadingSystem) window.loadingSystem.show('Guardando actividad...');
+function generateNumberOptions(start, end) {
+    let options = '';
+    for (let i = start; i <= end; i++) {
+        options += `<option value="${i}">${i}</option>`;
+    }
+    return options;
+}
+
+// ========== GESTIÓN DE FOTOS ==========
+
+function triggerCamera() {
+    document.getElementById('camera-input').click();
+}
+
+function triggerGallery() {
+    document.getElementById('gallery-input').click();
+}
+
+function handlePhotoSelect(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+
+        // Mostrar vista previa
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const preview = document.getElementById('photo-preview-element');
+            if (preview) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+        };
+        reader.readAsDataURL(file);
+
+        // Guardar para subir
+        currentPhotoBlob = file;
+    }
+    // Reiniciar input para permitir seleccionar la misma foto
+    input.value = '';
+}
+
+// ========== GUARDADO DE DATOS ==========
+
+async function saveDynamicAction() {
+    if (window.loadingSystem) window.loadingSystem.show('Guardando registro...');
 
     try {
-        const actividad = {
+        const baseData = {
             taskId: currentTaskId,
-            tipo: currentActionType,
-            icono: currentActionIcon,
-            notas: notas,
+            tipo: ACTIVITY_TYPES[currentFormType].title,
+            tipoCode: currentFormType,
+            icono: ACTIVITY_TYPES[currentFormType].icon,
             timestamp: new Date().toISOString(),
             fecha: new Date().toLocaleDateString('es-ES'),
             hora: new Date().toLocaleTimeString('es-ES')
         };
 
-        // Guardar en subcolección 'actividades' dentro de la tarea
-        await window.firebaseDB.collection('tareas').doc(currentTaskId).collection('actividades').add(actividad);
+        let specificData = {};
 
-        closeActionModal();
+        // Recolectar datos específicos
+        if (currentFormType === 'supervision') {
+            const respuestas = [];
+            SUPERVISION_QUESTIONS.forEach((q, index) => {
+                const val = document.getElementById(`sup-q-${index}`).value;
+                respuestas.push({ pregunta: q, respuesta: val });
+            });
+            specificData = { checklist: respuestas };
+
+        } else if (currentFormType === 'entrega') {
+            specificData = {
+                comentario: document.getElementById('entrega-comentario').value
+            };
+
+        } else if (currentFormType === 'capacitacion') {
+            specificData = {
+                subTipo: document.getElementById('cap-tipo').value,
+                tema: document.getElementById('cap-tema').value,
+                cantidad: parseInt(document.getElementById('cap-cantidad').value),
+                comentarios: document.getElementById('cap-comentarios').value
+            };
+
+        } else if (currentFormType === 'reunion') {
+            specificData = {
+                acuerdos: document.getElementById('reunion-acuerdos').value
+            };
+        }
+
+        // Subir foto si existe
+        let photoUrl = null;
+        if (currentPhotoBlob) {
+            const storageRef = window.firebaseStorage.ref();
+            const fileName = `visitas/${currentTaskId}/${Date.now()}_${currentFormType}.jpg`;
+            const imageRef = storageRef.child(fileName);
+
+            if (window.loadingSystem) window.loadingSystem.show('Subiendo foto...');
+            await imageRef.put(currentPhotoBlob);
+            photoUrl = await imageRef.getDownloadURL();
+        }
+
+        // Construir objeto final
+        const finalData = {
+            ...baseData,
+            ...specificData,
+            fotoUrl: photoUrl
+        };
+
+        // Guardar en Firestore
+        await window.firebaseDB.collection('tareas')
+            .doc(currentTaskId)
+            .collection('actividades')
+            .add(finalData);
+
         if (window.loadingSystem) window.loadingSystem.hide();
+        window.notificationSystem?.success('Actividad registrada correctamente');
+        closeDynamicModal();
 
-        // Recargar lista
-        loadActivities();
+        // No es necesario llamar a loadActivities porque el onSnapshot lo detectará automáticamente
 
     } catch (error) {
-        console.error("Error guardando actividad:", error);
+        console.error("Error guardando:", error);
         if (window.loadingSystem) window.loadingSystem.hide();
         alert("Error al guardar: " + error.message);
     }
 }
+
 
 // ========== LISTA DE ACTIVIDADES ==========
 
