@@ -1,0 +1,102 @@
+{
+    "app": {
+        "name": "LiderControl",
+        "description": "Geolocation-based task management system"
+    },
+    "auth": {
+        "login": "Sign In",
+        "email": "Email",
+        "password": "Password",
+        "forgot_password": "Forgot your password?",
+        "logout": "Sign Out",
+        "logging_in": "Signing in...",
+        "logging_out": "Signing out..."
+    },
+    "menu": {
+        "tasks": "My Tasks",
+        "rejected": "Rejected Tasks",
+        "map": "Task Map",
+        "history": "History",
+        "dashboard": "Dashboard",
+        "settings": "Settings",
+        "logout": "Sign Out"
+    },
+    "tasks": {
+        "pending": "Pending",
+        "started": "Started",
+        "completed": "Completed",
+        "no_tasks": "No tasks",
+        "loading": "Loading tasks...",
+        "create": "Create Task",
+        "edit": "Edit Task",
+        "delete": "Delete Task",
+        "status": "Status",
+        "type": "Type",
+        "client": "Client",
+        "unit": "Unit",
+        "distance": "Distance",
+        "date": "Date"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "total_tasks": "Total Tasks",
+        "completed": "Completed",
+        "pending": "Pending",
+        "completion_rate": "Completion Rate",
+        "tasks_by_status": "Tasks by Status",
+        "tasks_by_type": "Tasks by Type",
+        "tasks_timeline": "Timeline"
+    },
+    "export": {
+        "title": "Export Reports",
+        "pdf": "Export PDF",
+        "excel": "Export Excel",
+        "csv": "Export CSV",
+        "exporting": "Exporting...",
+        "success": "Report generated successfully",
+        "error": "Error generating report"
+    },
+    "form": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "required": "Required field",
+        "invalid_email": "Invalid email",
+        "select": "Select",
+        "search": "Search",
+        "description": "Description",
+        "observations": "Observations"
+    },
+    "notifications": {
+        "success": "Success",
+        "error": "Error",
+        "warning": "Warning",
+        "info": "Information",
+        "offline": "Offline",
+        "online": "Connection restored",
+        "syncing": "Syncing...",
+        "synced": "Synced"
+    },
+    "errors": {
+        "generic": "An error occurred",
+        "network": "Connection error",
+        "auth": "Authentication error",
+        "permission": "Permission denied",
+        "not_found": "Not found",
+        "validation": "Validation error"
+    },
+    "common": {
+        "yes": "Yes",
+        "no": "No",
+        "ok": "OK",
+        "close": "Close",
+        "confirm": "Confirm",
+        "loading": "Loading...",
+        "saving": "Saving...",
+        "deleting": "Deleting...",
+        "search": "Search",
+        "filter": "Filter",
+        "sort": "Sort",
+        "date": "Date",
+        "time": "Time"
+    }
+}

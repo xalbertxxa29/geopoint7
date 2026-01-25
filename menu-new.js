@@ -78,7 +78,6 @@ function initializePage(user) {
   document.getElementById('user-email').innerText = userData.email;
 
   // Inicializar componentes
-  initMenu();
   initTabs();
   initLogout();
   initFab();
@@ -88,34 +87,6 @@ function initializePage(user) {
 
   // Monitorear conexión
   monitorearConexion();
-}
-
-// ========== MENÚ LATERAL ==========
-
-function initMenu() {
-  const menuBtn = document.getElementById('menu-btn');
-  const sideMenu = document.getElementById('side-menu');
-  const overlay = document.querySelector('.overlay') || createOverlay();
-
-  if (!menuBtn) return;
-
-  menuBtn.addEventListener('click', () => {
-    sideMenu.classList.toggle('active');
-    overlay.classList.toggle('active');
-  });
-
-  overlay.addEventListener('click', () => {
-    sideMenu.classList.remove('active');
-    overlay.classList.remove('active');
-  });
-
-  // Cerrar menú al hacer click en un enlace
-  document.querySelectorAll('#side-menu a').forEach(link => {
-    link.addEventListener('click', () => {
-      sideMenu.classList.remove('active');
-      overlay.classList.remove('active');
-    });
-  });
 }
 
 // ========== TABS ==========
@@ -134,7 +105,13 @@ function initTabs() {
 
       // Agregar clase activa al seleccionado
       btn.classList.add('active');
-      document.getElementById(tabName)?.classList.add('active');
+      const selectedTab = document.getElementById(tabName);
+      selectedTab?.classList.add('active');
+
+      // Si es dashboard, cargar datos
+      if (tabName === 'dashboard') {
+        loadDashboardData();
+      }
     });
   });
 }
@@ -142,7 +119,7 @@ function initTabs() {
 // ========== LOGOUT ==========
 
 function initLogout() {
-  const logoutBtn = document.getElementById('logout-btn');
+  const logoutBtn = document.getElementById('logout-btn-float');
 
   if (!logoutBtn) return;
 
@@ -161,7 +138,9 @@ function initLogout() {
           }
 
           // Limpiar sesión local
-          window.SessionManager?.clearSession();
+          if (window.offlineStorage) {
+            await window.offlineStorage.clearAll();
+          }
 
           window.loadingSystem?.hide();
           window.notificationSystem?.success('Sesión cerrada');
@@ -181,48 +160,13 @@ function initLogout() {
 // ========== FAB (Floating Action Button) ==========
 
 function initFab() {
-  const mainFab = document.getElementById('main-fab');
-  const modal = document.getElementById('modal');
-  const closeModal = document.getElementById('close-modal');
-  const modalOptions = document.querySelectorAll('.modal-option');
+  const addTaskBtn = document.getElementById('add-task-btn');
 
-  if (!mainFab) {
-    console.warn('FAB no encontrado en el DOM');
-    return;
-  }
+  if (!addTaskBtn) return;
 
-  // ✅ Asegurar z-index alto (más que Google Maps)
-  mainFab.style.zIndex = '9999';
-
-  // ✅ Abrir modal al hacer click en FAB
-  mainFab.addEventListener('click', (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    if (modal) {
-      modal.classList.add('active');
-      modal.style.zIndex = '10000';
-    }
-  });
-
-  // Cerrar modal
-  closeModal?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    modal?.classList.remove('active');
-  });
-
-  // Cerrar modal al hacer click fuera (en el overlay)
-  modal?.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.remove('active');
-    }
-  });
-
-  // Seleccionar opción del modal
-  modalOptions.forEach(option => {
-    option.addEventListener('click', () => {
-      const tipo = option.getAttribute('data-tipo');
-      window.location.href = `formulario.html?tipo=${encodeURIComponent(tipo)}`;
-    });
+  // Click en botón: ir directamente al formulario
+  addTaskBtn.addEventListener('click', () => {
+    window.location.href = 'formulario.html';
   });
 }
 
@@ -498,35 +442,36 @@ function initMap() {
           setTimeout(() => {
             gpsOverlay.remove();
           }, 500);
-          window.notificationSystem?.warning('No se pudo obtener ubicación');
         }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 5000 // ✅ CLAVE: Permite usar ubicación en caché para carga instantánea
       }
     );
-  } else {
-    gpsOverlay.remove();
   }
-
-  window.currentMap = map;
 }
 
-// Inicializar mapa cuando Google Maps esté listo
+// ========== MAPA ==========
+
+function initMap() {
+  const mapElement = document.getElementById('map');
+  if (!mapElement) return;
+
+  try {
+    // Inicializar mapa con Leaflet
+    window.mapManager.initMap('map', {
+      zoom: 13
+    });
+
+    console.log('[Map] Mapa inicializado con Leaflet');
+  } catch (error) {
+    console.error('[Map] Error inicializando mapa:', error);
+    window.notificationSystem?.error('Error al cargar el mapa');
+  }
+}
+
+// Inicializar mapa cuando esté listo
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      if (typeof google !== 'undefined' && google.maps) {
-        initMap();
-      }
-    }, 500);
+    setTimeout(initMap, 500);
   });
 } else {
-  setTimeout(() => {
-    if (typeof google !== 'undefined' && google.maps) {
-      initMap();
-    }
-  }, 500);
+  setTimeout(initMap, 500);
 }

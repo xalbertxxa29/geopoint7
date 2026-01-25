@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Dashboard de Estadísticas - LiderControl">
+    <meta name="theme-color" content="#00d4ff">
+
+    <title>Dashboard | LiderControl</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="neon-styles.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <h1 data-i18n="dashboard.title">Dashboard</h1>
+            <p id="fecha"></p>
+        </div>
+        <div class="user-info">
+            <p id="user-name"></p>
+            <p id="user-email"></p>
+        </div>
+    </header>
+
+    <!-- Botón flotante de volver -->
+    <button id="back-btn-float" class="back-btn-float" title="Volver a Mis Tareas">
+        ←
+    </button>
+
+    <!-- Botón flotante de Cerrar Sesión -->
+    <button id="logout-btn-float" class="logout-btn-float" title="Cerrar Sesión">
+        🚪
+    </button>
+
+    <!-- Botón flotante de Exportar -->
+    <button id="export-btn-float" class="export-btn-float" title="Exportar reportes">
+        📊
+    </button>
+
+    <!-- Contenido Principal -->
+    <main>
+        <!-- KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon">📋</div>
+                <div class="kpi-content">
+                    <h3 data-i18n="dashboard.total_tasks">Total Tareas</h3>
+                    <p class="kpi-value" id="total-tasks">0</p>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon">✅</div>
+                <div class="kpi-content">
+                    <h3 data-i18n="dashboard.completed">Completadas</h3>
+                    <p class="kpi-value" id="completed-tasks">0</p>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon">⏳</div>
+                <div class="kpi-content">
+                    <h3 data-i18n="dashboard.pending">Pendientes</h3>
+                    <p class="kpi-value" id="pending-tasks">0</p>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon">📈</div>
+                <div class="kpi-content">
+                    <h3 data-i18n="dashboard.completion_rate">Tasa de Completado</h3>
+                    <p class="kpi-value" id="completion-rate">0%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h2 data-i18n="dashboard.tasks_by_status">Tareas por Estado</h2>
+                <canvas id="statusChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <h2 data-i18n="dashboard.tasks_by_type">Tareas por Tipo</h2>
+                <canvas id="typeChart"></canvas>
+            </div>
+
+            <div class="chart-card full-width">
+                <h2 data-i18n="dashboard.tasks_timeline">Línea de Tiempo</h2>
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Modal de Exportación -->
+        <div id="export-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-btn" id="close-export">×</span>
+                <h2 data-i18n="export.title">Exportar Reportes</h2>
+                <div class="export-options">
+                    <button class="export-option" data-format="pdf">
+                        <span class="option-icon">📄</span>
+                        <span data-i18n="export.pdf">Exportar PDF</span>
+                    </button>
+                    <button class="export-option" data-format="excel">
+                        <span class="option-icon">📊</span>
+                        <span data-i18n="export.excel">Exportar Excel</span>
+                    </button>
+                    <button class="export-option" data-format="csv">
+                        <span class="option-icon">📋</span>
+                        <span data-i18n="export.csv">Exportar CSV</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Sistemas Globales -->
+    <script src="firebase-config.js"></script>
+    <script src="notification-system.js"></script>
+    <script src="loader-system.js"></script>
+    <script src="helpers.js"></script>
+    <script src="logger.js"></script>
+    <script src="error-tracker.js"></script>
+    <script src="i18n.js"></script>
+    <script src="export-manager.js"></script>
+
+    <!-- Script del Dashboard -->
+    <script src="dashboard.js"></script>
+</body>
+
+</html>

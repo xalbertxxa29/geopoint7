@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -9,16 +10,19 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="LiderControl">
     <meta name="mobile-web-app-capable" content="yes">
-    
+
     <title>LiderControl | Login</title>
-    
+
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%2300d4ff' width='100' height='100'/><text x='50' y='75' font-size='60' fill='white' text-anchor='middle' font-family='Arial'>L</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%2300d4ff' width='180' height='180'/><text x='90' y='135' font-size='100' fill='white' text-anchor='middle' font-family='Arial'>L</text></svg>">
-    
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%2300d4ff' width='100' height='100'/><text x='50' y='75' font-size='60' fill='white' text-anchor='middle' font-family='Arial'>L</text></svg>">
+    <link rel="apple-touch-icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%2300d4ff' width='180' height='180'/><text x='90' y='135' font-size='100' fill='white' text-anchor='middle' font-family='Arial'>L</text></svg>">
+
     <link rel="stylesheet" href="neon-styles.css">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="login-container">
         <div class="logo">
@@ -29,25 +33,15 @@
             <form id="login-form" novalidate>
                 <div class="form-group">
                     <label for="username">Correo Electrónico</label>
-                    <input 
-                        type="email" 
-                        id="username" 
-                        placeholder="tu@email.com" 
-                        required
-                        autocomplete="email"
-                    >
+                    <input type="email" id="username" placeholder="tu@email.com" required autocomplete="email">
                 </div>
                 <div class="form-group">
                     <label for="password">Contraseña</label>
                     <div class="password-input-wrapper">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            placeholder="••••••••" 
-                            required
-                            autocomplete="current-password"
-                        >
-                        <button type="button" id="toggle-password" class="toggle-password-btn" aria-label="Mostrar/Ocultar contraseña">👁️</button>
+                        <input type="password" id="password" placeholder="••••••••" required
+                            autocomplete="current-password">
+                        <button type="button" id="toggle-password" class="toggle-password-btn"
+                            aria-label="Mostrar/Ocultar contraseña">👁️</button>
                     </div>
                 </div>
                 <button type="submit" id="login-btn" class="btn-primary">Iniciar Sesión</button>
@@ -75,10 +69,13 @@
     <script src="notification-system.js"></script>
     <script src="loader-system.js"></script>
     <script src="helpers.js"></script>
+    <script src="logger.js"></script>
+    <script src="error-tracker.js"></script>
     <script src="offline-queue.js"></script>
     <script src="pwa-init.js"></script>
 
     <!-- Autenticación -->
     <script src="auth.js"></script>
 </body>
+
 </html>

@@ -48,9 +48,9 @@
         <button id="logout-btn" class="logout-btn">Cerrar Sesión</button>
     </nav>
 
+
     <!-- Contenido Principal -->
     <main>
-        <button id="emergency-btn" class="emergency-btn" title="Recargar información">⟲ Recargar</button>
         <h2>Formulario de Tarea</h2>
         <p>Completa la información del formulario:</p>
 
@@ -79,10 +79,6 @@
                     <input type="text" id="longitud" placeholder="Longitud" disabled>
                 </div>
                 <div class="form-group">
-                    <label for="tipoTarea">Tipo de Tarea</label>
-                    <input type="text" id="tipoTarea" placeholder="Tipo de Tarea" disabled>
-                </div>
-                <div class="form-group">
                     <label for="ubicaciones-mapa">Ubicación del Cliente</label>
                     <div class="map-container">
                         <div id="ubicaciones-mapa" class="map-element"></div>
@@ -93,7 +89,7 @@
 
         <div class="form-buttons">
             <button id="cancelar" class="btn-secondary">Cancelar</button>
-            <button id="enviar" class="btn-primary">Enviar</button>
+            <button id="enviar" class="btn-primary" disabled>SIGUIENTE</button>
         </div>
     </main>
 
@@ -103,6 +99,14 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
 
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <!-- Sistemas Globales -->
     <script src="firebase-config.js"></script>
     <script src="notification-system.js"></script>
@@ -111,9 +115,8 @@
     <script src="offline-queue.js"></script>
     <script src="pwa-init.js"></script>
 
-    <!-- Google Maps API -->
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIJVQyZz32eAvWIpmN6tOy_CGbtfSjBJo&loading=async"></script>
+    <!-- Map Manager (Leaflet) -->
+    <script src="map-manager.js"></script>
 
     <!-- Script del formulario mejorado -->
     <script src="formulario-new.js"></script>

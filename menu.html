@@ -16,36 +16,22 @@
 </head>
 
 <body>
-    <!-- Header con menú hamburguesa -->
+    <!-- Header -->
     <header>
         <div class="header-content">
-            <button id="menu-btn" class="menu-btn" aria-label="Abrir menú">☰</button>
             <h1>Mis Tareas</h1>
+            <p id="fecha"></p>
         </div>
-        <p id="fecha"></p>
-    </header>
-
-    <!-- Menú lateral -->
-    <nav id="side-menu" class="side-menu">
-        <div class="user-details">
+        <div class="user-info">
             <p id="user-name"></p>
             <p id="user-email"></p>
         </div>
-        <ul>
-            <li><a href="menu.html" class="active">Mis Tareas</a></li>
-            <li><a href="#">Tareas Rechazadas</a></li>
-            <li><a href="#">Mapa de Tareas</a></li>
-            <li><a href="#">Historial</a></li>
-            <li><a href="#">Dashboard</a></li>
-        </ul>
-        <hr>
-        <ul>
-            <li><a href="#">Cambiar de Equipo</a></li>
-            <li><a href="#">Ajustes</a></li>
-        </ul>
-        <hr>
-        <button id="logout-btn" class="logout-btn">Cerrar Sesión</button>
-    </nav>
+    </header>
+
+    <!-- Botón flotante de Cerrar Sesión -->
+    <button id="logout-btn-float" class="logout-btn-float" title="Cerrar Sesión">
+        🚪
+    </button>
 
     <!-- Contenido Principal -->
     <main>
@@ -53,6 +39,8 @@
             <button class="tab-btn active" data-tab="pendientes">Pendientes</button>
             <button class="tab-btn" data-tab="iniciados">Iniciados</button>
             <button class="tab-btn" data-tab="completados">Completados</button>
+            <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+            <button class="tab-btn" data-tab="historial">Historial</button>
         </div>
 
         <div id="pendientes" class="tab-content active">
@@ -61,61 +49,87 @@
             <div class="map-container">
                 <div id="map" class="map-element"></div>
             </div>
+            <div id="tareas-pendientes" class="tareas-container"></div>
         </div>
 
         <div id="iniciados" class="tab-content">
             <h2>Tareas Iniciadas</h2>
             <p>Estas son las tareas que has iniciado:</p>
-            <div id="iniciados-container" class="tareas-container">
-                <!-- Aquí se insertarán las tarjetas dinámicamente -->
-            </div>
+            <div id="tareas-iniciadas" class="tareas-container"></div>
         </div>
 
         <div id="completados" class="tab-content">
             <h2>Tareas Completadas</h2>
-            <div id="completados-container" class="tareas-container">
-                <!-- Aquí se insertarán las tarjetas dinámicamente -->
-            </div>
+            <p>Estas son las tareas que has completado:</p>
+            <div id="tareas-completadas" class="tareas-container"></div>
         </div>
 
-        <!-- FAB (Floating Action Button) -->
-        <div class="fab-container">
-            <button class="fab main-fab" id="main-fab" title="Agregar tarea">⊕</button>
-            <div class="fab-options" id="fab-options">
-                <button class="fab option-fab" id="add-fab" title="Nueva tarea">+</button>
-            </div>
-        </div>
+        <!-- Nueva pestaña de Dashboard -->
+        <div id="dashboard" class="tab-content">
+            <h2>📊 Dashboard de Estadísticas</h2>
 
-        <!-- Modal para las opciones -->
-        <div id="modal" class="modal">
-            <div class="modal-content">
-                <span class="close-btn" id="close-modal">&times;</span>
-                <h2>Selecciona un Formulario</h2>
-                <p>Elige el tipo de tarea a realizar:</p>
-                <div class="modal-options">
-                    <button class="modal-option" data-tipo="Unidades Armadas">
-                        <span class="option-icon">🚁</span>
-                        <span>UNIDADES ARMADAS</span>
-                    </button>
-                    <button class="modal-option" data-tipo="Encuesta de Satisfacción">
-                        <span class="option-icon">📊</span>
-                        <span>ENCUESTA</span>
-                    </button>
-                    <button class="modal-option" data-tipo="Ronda de la Unidad">
-                        <span class="option-icon">🔍</span>
-                        <span>RONDA</span>
-                    </button>
-                    <button class="modal-option" data-tipo="Formulario Dinámico">
-                        <span class="option-icon">📝</span>
-                        <span>DINÁMICO</span>
-                    </button>
-                    <button class="modal-option" data-tipo="Resguardos">
-                        <span class="option-icon">📦</span>
-                        <span>RESGUARDOS</span>
-                    </button>
+            <!-- KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon">📋</div>
+                    <div class="kpi-content">
+                        <h3>Total Tareas</h3>
+                        <p class="kpi-value" id="total-tasks">0</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">✅</div>
+                    <div class="kpi-content">
+                        <h3>Completadas</h3>
+                        <p class="kpi-value" id="completed-tasks">0</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">⏳</div>
+                    <div class="kpi-content">
+                        <h3>Pendientes</h3>
+                        <p class="kpi-value" id="pending-tasks">0</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon">📈</div>
+                    <div class="kpi-content">
+                        <h3>Tasa de Completado</h3>
+                        <p class="kpi-value" id="completion-rate">0%</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Tareas por Estado</h3>
+                    <canvas id="statusChart"></canvas>
+                </div>
+
+                <div class="chart-card">
+                    <h3>Tareas por Tipo</h3>
+                    <canvas id="typeChart"></canvas>
+                </div>
+
+                <div class="chart-card chart-full">
+                    <h3>Línea de Tiempo</h3>
+                    <canvas id="timelineChart"></canvas>
                 </div>
             </div>
         </div>
+
+        <!-- Pestaña de Historial (placeholder) -->
+        <div id="historial" class="tab-content">
+            <h2>📜 Historial</h2>
+            <p>Esta funcionalidad estará disponible próximamente.</p>
+        </div>
+
+        <!-- Botón flotante para agregar tarea -->
+        <button class="fab main-fab" id="add-task-btn" title="Agregar tarea">⊕</button>
     </main>
 
     <!-- Firebase SDKs -->
@@ -124,21 +138,38 @@
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
 
-    <!-- Google Maps API -->
-    <script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIJVQyZz32eAvWIpmN6tOy_CGbtfSjBJo&loading=async"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Chart.js para Dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <!-- Sistemas Globales -->
     <script src="firebase-config.js"></script>
     <script src="notification-system.js"></script>
     <script src="loader-system.js"></script>
     <script src="helpers.js"></script>
+    <script src="logger.js"></script>
+    <script src="error-tracker.js"></script>
     <script src="offline-queue.js"></script>
     <script src="pwa-init.js"></script>
     <script src="offline-storage.js"></script>
+    <script src="i18n.js"></script>
+    <script src="push-notifications.js"></script>
+
+    <!-- Map Manager (Leaflet) -->
+    <script src="map-manager.js"></script>
 
     <!-- Script Principal del Menú -->
     <script src="menu-new.js"></script>
+
+    <!-- Dashboard Functions -->
+    <script src="menu-dashboard.js"></script>
 </body>
 
 </html>

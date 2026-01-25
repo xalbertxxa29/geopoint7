@@ -1,0 +1,102 @@
+{
+    "app": {
+        "name": "LiderControl",
+        "description": "Sistema de gestión de tareas con geolocalización"
+    },
+    "auth": {
+        "login": "Iniciar Sesión",
+        "email": "Correo Electrónico",
+        "password": "Contraseña",
+        "forgot_password": "¿Olvidaste tu contraseña?",
+        "logout": "Cerrar Sesión",
+        "logging_in": "Iniciando sesión...",
+        "logging_out": "Cerrando sesión..."
+    },
+    "menu": {
+        "tasks": "Mis Tareas",
+        "rejected": "Tareas Rechazadas",
+        "map": "Mapa de Tareas",
+        "history": "Historial",
+        "dashboard": "Dashboard",
+        "settings": "Ajustes",
+        "logout": "Cerrar Sesión"
+    },
+    "tasks": {
+        "pending": "Pendientes",
+        "started": "Iniciadas",
+        "completed": "Completadas",
+        "no_tasks": "No hay tareas",
+        "loading": "Cargando tareas...",
+        "create": "Crear Tarea",
+        "edit": "Editar Tarea",
+        "delete": "Eliminar Tarea",
+        "status": "Estado",
+        "type": "Tipo",
+        "client": "Cliente",
+        "unit": "Unidad",
+        "distance": "Distancia",
+        "date": "Fecha"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "total_tasks": "Total Tareas",
+        "completed": "Completadas",
+        "pending": "Pendientes",
+        "completion_rate": "Tasa de Completado",
+        "tasks_by_status": "Tareas por Estado",
+        "tasks_by_type": "Tareas por Tipo",
+        "tasks_timeline": "Línea de Tiempo"
+    },
+    "export": {
+        "title": "Exportar Reportes",
+        "pdf": "Exportar PDF",
+        "excel": "Exportar Excel",
+        "csv": "Exportar CSV",
+        "exporting": "Exportando...",
+        "success": "Reporte generado exitosamente",
+        "error": "Error al generar reporte"
+    },
+    "form": {
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "required": "Campo requerido",
+        "invalid_email": "Email inválido",
+        "select": "Seleccionar",
+        "search": "Buscar",
+        "description": "Descripción",
+        "observations": "Observaciones"
+    },
+    "notifications": {
+        "success": "Éxito",
+        "error": "Error",
+        "warning": "Advertencia",
+        "info": "Información",
+        "offline": "Sin conexión",
+        "online": "Conexión restaurada",
+        "syncing": "Sincronizando...",
+        "synced": "Sincronizado"
+    },
+    "errors": {
+        "generic": "Ha ocurrido un error",
+        "network": "Error de conexión",
+        "auth": "Error de autenticación",
+        "permission": "Permiso denegado",
+        "not_found": "No encontrado",
+        "validation": "Error de validación"
+    },
+    "common": {
+        "yes": "Sí",
+        "no": "No",
+        "ok": "OK",
+        "close": "Cerrar",
+        "confirm": "Confirmar",
+        "loading": "Cargando...",
+        "saving": "Guardando...",
+        "deleting": "Eliminando...",
+        "search": "Buscar",
+        "filter": "Filtrar",
+        "sort": "Ordenar",
+        "date": "Fecha",
+        "time": "Hora"
+    }
+}

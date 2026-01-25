@@ -1,320 +1,415 @@
 /**
- * Google Maps Integration - Soporte offline y sincronización
- * Basado en la lógica de BBVA3
+ * Map Manager con Leaflet
+ * Sistema de mapas gratuito con OpenStreetMap
  */
 
 class MapManager {
   constructor() {
     this.map = null;
-    this.meMarker = null;
-    this.watchId = null;
-    this.DEFAULT_CENTER = { lat: -12.05, lng: -77.05 }; // Lima, Perú
-    this.isReady = false;
+    this.userMarker = null;
+    this.taskMarkers = [];
+    this.polylines = [];
+    this.userLocation = null;
+
+    // Iconos personalizados
+    this.userIcon = this.createCustomIcon('📍', '#00ff64');
+    this.taskIcon = this.createCustomIcon('📌', '#00d4ff');
+    this.completedIcon = this.createCustomIcon('✅', '#6bcf7f');
   }
 
   /**
-   * Inicializar el mapa
+   * Crear icono personalizado con emoji
    */
-  initMap(elementId = 'map') {
-    try {
-      const mapElement = document.getElementById(elementId);
-      if (!mapElement) {
-        console.warn('Elemento del mapa no encontrado');
-        return;
-      }
-
-      this.map = new google.maps.Map(mapElement, {
-        center: this.DEFAULT_CENTER,
-        zoom: 13,
-        styles: this.getMapStyles()
-      });
-
-      this.isReady = true;
-      console.log('Mapa inicializado exitosamente');
-
-      // Ajustar al redimensionar
-      window.addEventListener('resize', () => {
-        if (this.map) {
-          google.maps.event.trigger(this.map, 'resize');
-          this.map.setCenter(this.DEFAULT_CENTER);
-        }
-      });
-
-      // Iniciar GPS con primer toque
-      document.addEventListener('pointerdown', () => this.startGPS(), { once: true });
-
-      return this.map;
-    } catch (error) {
-      console.error('Error al inicializar mapa:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Estilos personalizados del mapa (tema oscuro)
-   */
-  getMapStyles() {
-    return [
-      { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-      { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-      { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-      {
-        featureType: 'administrative.locality',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }]
-      },
-      {
-        featureType: 'poi',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }]
-      },
-      {
-        featureType: 'poi.park',
-        elementType: 'geometry',
-        stylers: [{ color: '#263c3f' }]
-      },
-      {
-        featureType: 'poi.park',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#6b9080' }]
-      },
-      {
-        featureType: 'road',
-        elementType: 'geometry',
-        stylers: [{ color: '#38414e' }]
-      },
-      {
-        featureType: 'road',
-        elementType: 'geometry.stroke',
-        stylers: [{ color: '#212a37' }]
-      },
-      {
-        featureType: 'road',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#9ca5b3' }]
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'geometry',
-        stylers: [{ color: '#746855' }]
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'geometry.stroke',
-        stylers: [{ color: '#1f2835' }]
-      },
-      {
-        featureType: 'road.highway',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#f3751b' }]
-      },
-      {
-        featureType: 'transit',
-        elementType: 'geometry',
-        stylers: [{ color: '#2f3948' }]
-      },
-      {
-        featureType: 'transit.station',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#d59563' }]
-      },
-      {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [{ color: '#17263c' }]
-      },
-      {
-        featureType: 'water',
-        elementType: 'labels.text.fill',
-        stylers: [{ color: '#515c6d' }]
-      },
-      {
-        featureType: 'water',
-        elementType: 'labels.text.stroke',
-        stylers: [{ color: '#17263c' }]
-      }
-    ];
-  }
-
-  /**
-   * Colocar marcador en la ubicación actual
-   */
-  placeMarker(pos, title = 'Tu ubicación') {
-    if (!pos || !this.map) return;
-
-    if (!this.meMarker) {
-      this.meMarker = new google.maps.Marker({
-        map: this.map,
-        position: pos,
-        title: title,
-        icon: 'https://maps.gstatic.com/mapfiles/ms2/micons/blue-dot.png',
-        animation: google.maps.Animation.DROP
-      });
-    } else {
-      this.meMarker.setPosition(pos);
-    }
-
-    this.map.setCenter(pos);
-    this.map.setZoom(15);
-  }
-
-  /**
-   * Obtener ubicación una sola vez (intento único con timeout)
-   */
-  async getLocationOnce(highAccuracy = true, timeout = 8000) {
-    return new Promise((resolve, reject) => {
-      if (!('geolocation' in navigator)) {
-        return reject(new Error('Geolocation no disponible'));
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          };
-          resolve(pos);
-        },
-        (error) => reject(error),
-        {
-          enableHighAccuracy: highAccuracy,
-          maximumAge: 0,
-          timeout: timeout
-        }
-      );
+  createCustomIcon(emoji, color) {
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `
+        <div style="
+          font-size: 2rem;
+          text-align: center;
+          filter: drop-shadow(0 0 10px ${color});
+          animation: markerPulse 2s ease-in-out infinite;
+        ">${emoji}</div>
+      `,
+      iconSize: [40, 40],
+      iconAnchor: [20, 40],
+      popupAnchor: [0, -40]
     });
   }
 
   /**
-   * Iniciar monitoreo de ubicación en tiempo real
+   * Inicializar mapa
    */
-  async startGPS() {
-    try {
-      // Intento con alta precisión
-      const pos = await this.getLocationOnce(true, 8000);
-      this.placeMarker(pos);
-      console.log('GPS: Ubicación obtenida (alta precisión)');
-    } catch (err) {
-      console.warn('GPS: Reintentando con baja precisión...');
-      try {
-        // Reintento con baja precisión
-        const pos = await this.getLocationOnce(false, 8000);
-        this.placeMarker(pos);
-        console.log('GPS: Ubicación obtenida (baja precisión)');
-      } catch (err2) {
-        console.warn('GPS: No se pudo obtener ubicación', err2);
-        this.placeMarker(this.DEFAULT_CENTER, 'Ubicación por defecto');
-      }
-    }
-
-    // Activar monitoreo continuo si está disponible
-    if ('geolocation' in navigator) {
-      if (this.watchId !== null) {
-        navigator.geolocation.clearWatch(this.watchId);
-      }
-
-      this.watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          this.placeMarker({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
-        },
-        (error) => {
-          console.warn('Error en watchPosition:', error);
-        },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 5000,
-          timeout: 12000
-        }
-      );
-    }
-  }
-
-  /**
-   * Detener monitoreo de GPS
-   */
-  stopGPS() {
-    if (this.watchId !== null) {
-      navigator.geolocation.clearWatch(this.watchId);
-      this.watchId = null;
-      console.log('GPS desactivado');
-    }
-  }
-
-  /**
-   * Agregar marcador personalizado al mapa
-   */
-  addMarker(position, options = {}) {
-    if (!this.map) return null;
-
-    const markerOptions = {
-      map: this.map,
-      position: position,
-      title: options.title || 'Marcador',
+  initMap(containerId, options = {}) {
+    const defaultOptions = {
+      center: [-12.17728023948694, -77.01656233220194], // Lima, Perú (ubicación específica)
+      zoom: 13,
+      zoomControl: true,
       ...options
     };
 
-    return new google.maps.Marker(markerOptions);
-  }
+    // Crear mapa
+    this.map = L.map(containerId, {
+      center: defaultOptions.center,
+      zoom: defaultOptions.zoom,
+      zoomControl: defaultOptions.zoomControl,
+      attributionControl: false
+    });
 
-  /**
-   * Agregar círculo al mapa (para mostrar área de cobertura)
-   */
-  addCircle(center, radius, options = {}) {
-    if (!this.map) return null;
+    // Agregar capa de OpenStreetMap con tema oscuro
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors © CARTO',
+      maxZoom: 19,
+      subdomains: 'abcd'
+    }).addTo(this.map);
 
-    const circleOptions = {
-      map: this.map,
-      center: center,
-      radius: radius,
-      fillColor: '#00d4ff',
-      fillOpacity: 0.15,
-      strokeColor: '#00d4ff',
-      strokeOpacity: 0.8,
-      strokeWeight: 2,
-      ...options
-    };
+    // Agregar controles personalizados
+    this.addCustomControls();
 
-    return new google.maps.Circle(circleOptions);
-  }
+    // Obtener ubicación del usuario
+    this.getUserLocation();
 
-  /**
-   * Centrar mapa en una posición
-   */
-  centerAt(pos, zoom = 15) {
-    if (!this.map) return;
-    this.map.setCenter(pos);
-    this.map.setZoom(zoom);
-  }
-
-  /**
-   * Obtener instancia del mapa
-   */
-  getMap() {
     return this.map;
   }
 
   /**
-   * Verificar si el mapa está listo
+   * Agregar controles personalizados
    */
-  isReady() {
-    return this.isReady && this.map !== null;
+  addCustomControls() {
+    // Control de zoom personalizado
+    L.control.zoom({
+      position: 'bottomright',
+      zoomInTitle: 'Acercar',
+      zoomOutTitle: 'Alejar'
+    }).addTo(this.map);
+
+    // Botón de ubicación
+    const locationButton = L.control({ position: 'bottomright' });
+    locationButton.onAdd = () => {
+      const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      div.innerHTML = `
+        <a href="#" class="location-btn" title="Mi ubicación" style="
+          background: linear-gradient(135deg, #00d4ff, #00ffff);
+          color: #0a0e27;
+          font-size: 1.2rem;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-decoration: none;
+          border-radius: 4px;
+          box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        ">📍</a>
+      `;
+
+      div.onclick = (e) => {
+        e.preventDefault();
+        this.centerOnUser();
+      };
+
+      return div;
+    };
+    locationButton.addTo(this.map);
   }
 
   /**
-   * Callback para Google Maps API
+   * Obtener ubicación del usuario
    */
-  static initCallback() {
-    if (window.mapManager) {
-      window.mapManager.initMap();
+  getUserLocation() {
+    // Ubicación por defecto (Lima, Perú - coordenadas específicas del usuario)
+    const defaultLocation = [-12.17728023948694, -77.01656233220194];
+
+    if (!navigator.geolocation) {
+      console.warn('Geolocalización no soportada, usando ubicación por defecto');
+      this.userLocation = defaultLocation;
+      this.map.setView(this.userLocation, 15);
+      this.addUserMarker(this.userLocation);
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        this.userLocation = [latitude, longitude];
+
+        // Centrar mapa en usuario
+        this.map.setView(this.userLocation, 15);
+
+        // Agregar marcador de usuario
+        this.addUserMarker(this.userLocation);
+
+        // Agregar círculo de precisión
+        L.circle(this.userLocation, {
+          radius: position.coords.accuracy,
+          color: '#00ff64',
+          fillColor: '#00ff64',
+          fillOpacity: 0.1,
+          weight: 2
+        }).addTo(this.map);
+
+        console.log('[Map] Ubicación GPS obtenida:', this.userLocation);
+      },
+      (error) => {
+        console.warn('[Map] Error obteniendo ubicación GPS, usando ubicación por defecto:', error.message);
+
+        // Usar ubicación por defecto si falla el GPS
+        this.userLocation = defaultLocation;
+        this.map.setView(this.userLocation, 15);
+        this.addUserMarker(this.userLocation);
+
+        window.notificationSystem?.warning('Usando ubicación por defecto (GPS no disponible)');
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
+
+    // Seguir ubicación en tiempo real (solo si se obtuvo GPS exitosamente)
+    navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        this.userLocation = [latitude, longitude];
+        this.updateUserMarker(this.userLocation);
+      },
+      (error) => {
+        console.warn('[Map] Error en watchPosition:', error.message);
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  }
+
+  /**
+   * Agregar marcador de usuario
+   */
+  addUserMarker(location) {
+    if (this.userMarker) {
+      this.userMarker.setLatLng(location);
+    } else {
+      this.userMarker = L.marker(location, { icon: this.userIcon })
+        .addTo(this.map)
+        .bindPopup(`
+          <div style="
+            background: linear-gradient(135deg, #1a1e3a, #0a0e27);
+            color: #00d4ff;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #00d4ff;
+            text-align: center;
+          ">
+            <strong>📍 Tu ubicación</strong>
+          </div>
+        `);
+    }
+  }
+
+  /**
+   * Actualizar marcador de usuario
+   */
+  updateUserMarker(location) {
+    if (this.userMarker) {
+      this.userMarker.setLatLng(location);
+    }
+  }
+
+  /**
+   * Centrar mapa en usuario
+   */
+  centerOnUser() {
+    if (this.userLocation) {
+      this.map.setView(this.userLocation, 16, {
+        animate: true,
+        duration: 1
+      });
+    } else {
+      window.notificationSystem?.warning('Ubicación no disponible');
+    }
+  }
+
+  /**
+   * Agregar marcador de tarea
+   */
+  addTaskMarker(task) {
+    if (!task.ubicacion) return;
+
+    const location = [task.ubicacion.latitude, task.ubicacion.longitude];
+    const icon = task.estado === 'completada' ? this.completedIcon : this.taskIcon;
+
+    const marker = L.marker(location, { icon })
+      .addTo(this.map)
+      .bindPopup(`
+        <div style="
+          background: linear-gradient(135deg, #1a1e3a, #0a0e27);
+          color: #00d4ff;
+          padding: 15px;
+          border-radius: 10px;
+          border: 2px solid #00d4ff;
+          min-width: 200px;
+        ">
+          <h3 style="margin: 0 0 10px 0; color: #00ffff; font-size: 1.1rem;">
+            ${task.tipoTarea || 'Tarea'}
+          </h3>
+          <p style="margin: 5px 0; color: #a0a0cc;">
+            <strong>Cliente:</strong> ${task.cliente || 'N/A'}
+          </p>
+          <p style="margin: 5px 0; color: #a0a0cc;">
+            <strong>Unidad:</strong> ${task.unidad || 'N/A'}
+          </p>
+          <p style="margin: 5px 0; color: #a0a0cc;">
+            <strong>Estado:</strong> 
+            <span style="color: ${this.getStatusColor(task.estado)};">
+              ${task.estado || 'pendiente'}
+            </span>
+          </p>
+          ${task.distancia ? `
+            <p style="margin: 5px 0; color: #00ff64;">
+              <strong>📏 Distancia:</strong> ${Math.round(task.distancia)}m
+            </p>
+          ` : ''}
+        </div>
+      `);
+
+    this.taskMarkers.push({ id: task.id, marker });
+
+    // Dibujar línea si hay ubicación de usuario
+    if (this.userLocation) {
+      this.drawPolyline(this.userLocation, location, task.estado);
+    }
+
+    return marker;
+  }
+
+  /**
+   * Dibujar línea entre dos puntos
+   */
+  drawPolyline(start, end, status = 'pendiente') {
+    const colors = {
+      'pendiente': '#ff6b6b',
+      'iniciada': '#ffd93d',
+      'completada': '#6bcf7f'
+    };
+
+    const polyline = L.polyline([start, end], {
+      color: colors[status] || '#00d4ff',
+      weight: 3,
+      opacity: 0.7,
+      dashArray: '10, 10',
+      className: 'task-polyline'
+    }).addTo(this.map);
+
+    this.polylines.push(polyline);
+
+    return polyline;
+  }
+
+  /**
+   * Limpiar marcadores de tareas
+   */
+  clearTaskMarkers() {
+    this.taskMarkers.forEach(({ marker }) => {
+      this.map.removeLayer(marker);
+    });
+    this.taskMarkers = [];
+
+    this.polylines.forEach(polyline => {
+      this.map.removeLayer(polyline);
+    });
+    this.polylines = [];
+  }
+
+  /**
+   * Calcular distancia entre dos puntos
+   */
+  calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371e3; // Radio de la Tierra en metros
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distancia en metros
+  }
+
+  /**
+   * Obtener color según estado
+   */
+  getStatusColor(status) {
+    const colors = {
+      'pendiente': '#ff6b6b',
+      'iniciada': '#ffd93d',
+      'completada': '#6bcf7f'
+    };
+    return colors[status] || '#00d4ff';
+  }
+
+  /**
+   * Ajustar vista para mostrar todos los marcadores
+   */
+  fitBounds() {
+    if (this.taskMarkers.length === 0) return;
+
+    const bounds = L.latLngBounds(
+      this.taskMarkers.map(({ marker }) => marker.getLatLng())
+    );
+
+    if (this.userLocation) {
+      bounds.extend(this.userLocation);
+    }
+
+    this.map.fitBounds(bounds, { padding: [50, 50] });
   }
 }
 
-// Crear instancia global
-window.MapManager = MapManager;
+// Instancia global
 window.mapManager = new MapManager();
+
+// Estilos CSS para animaciones
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes markerPulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+  }
+  
+  .leaflet-container {
+    background: #0a0e27 !important;
+  }
+  
+  .leaflet-control-zoom a {
+    background: linear-gradient(135deg, #1a1e3a, #0a0e27) !important;
+    color: #00d4ff !important;
+    border: 2px solid #00d4ff !important;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3) !important;
+  }
+  
+  .leaflet-control-zoom a:hover {
+    background: linear-gradient(135deg, #00d4ff, #00ffff) !important;
+    color: #0a0e27 !important;
+  }
+  
+  .task-polyline {
+    filter: drop-shadow(0 0 5px currentColor);
+  }
+  
+  .leaflet-popup-content-wrapper {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  
+  .leaflet-popup-tip {
+    background: #00d4ff !important;
+  }
+`;
+document.head.appendChild(style);
